@@ -72,8 +72,12 @@ def simulate_with_timeout(experiment_id, policy_name,
                                ideal=ideal)
                 average_jct = sched.get_average_jct(jobs_to_complete)
                 utilization = 1.0
+                max_min_fairness = 1.0
+                jain_fairness = 1.0
                 if not ideal:
                     utilization = sched.get_cluster_utilization()
+                    max_min_fairness = sched.get_max_min_fairness()
+                    jain_fairness = sched.get_jain_fairness()
             else:
                 try:
                     func_timeout(timeout, sched.simulate,
@@ -92,6 +96,8 @@ def simulate_with_timeout(experiment_id, policy_name,
                                  })
                     average_jct = sched.get_average_jct(jobs_to_complete)
                     utilization = sched.get_cluster_utilization()
+                    sched.get_max_min_fairness()
+                    sched.get_jain_fairness()
                 except FunctionTimedOut:
                     average_jct = float('inf')
                     utilization = 1.0
@@ -99,10 +105,13 @@ def simulate_with_timeout(experiment_id, policy_name,
     if verbose:
         current_time = datetime.datetime.now()
         print('[%s] [Experiment ID: %2d] '
-              'Results: average JCT=%f, utilization=%f' % (current_time,
+              'Results: average JCT=%f, utilization=%f '
+                 'max_min_fairness=%f jain_fairness=%f' % (current_time,
                                                            experiment_id,
                                                            average_jct,
-                                                           utilization))
+                                                           utilization,
+                                                           max_min_fairness,
+                                                           jain_fairness))
     sched.shutdown()
 
     return average_jct, utilization

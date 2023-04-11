@@ -1897,6 +1897,18 @@ class Scheduler:
             if job_id in self._total_steps_run:
                 completed_steps = self._total_steps_run[job_id]
                 print('Job %s: %d steps' % (job_id, completed_steps))
+    
+    def get_jain_fairness(self):
+        with self._scheduler_lock:
+            fairness = sum(self._cumulative_worker_time_so_far.values()) ** 2 / (len(self._cumulative_worker_time_so_far) * sum(map(lambda i: i * i, self._cumulative_worker_time_so_far.values())))
+            print('Scheduler Jain fairness: %.3f' % (fairness))
+            return fairness
+
+    def get_max_min_fairness(self):
+        with self._scheduler_lock:
+            fairness = min(self._cumulative_worker_time_so_far.values()) / max(self._cumulative_worker_time_so_far.values())
+            print('Scheduler max min fairness: %.3f' % (fairness))
+            return fairness
 
     def get_cluster_utilization(self):
         """Computes the utilization of the cluster."""
@@ -2113,7 +2125,11 @@ class Scheduler:
         cluster_spec = state['cluster_spec']
 
         # Compute the allocation.
-        if self._policy.name == "AlloX_Perf":
+        if self._policy.name == "SJF":
+            allocation = self._policy.get_allocation(
+                throughputs,
+                cluster_spec)
+        elif self._policy.name == "AlloX_Perf":
             allocation = self._policy.get_allocation(
                 throughputs, scale_factors,
                 times_since_start, num_steps_remaining,
